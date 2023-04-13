@@ -1,0 +1,26 @@
+# Maven target directory
+target/
+
+# IDE files
+.idea/
+*.iml
+*.ipr
+*.iws
+*.classpath
+*.project
+
+# Logs
+*.log
+
+# Compiled classes
+*.class
+
+# Package files
+*.jar
+*.war
+*.ear
+
+# Maven specific files
+pom.xml.*
+mvnw
+mvnw.cmd

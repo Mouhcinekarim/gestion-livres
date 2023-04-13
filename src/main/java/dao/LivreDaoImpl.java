@@ -1,0 +1,186 @@
+package dao;
+
+import java.util.Date;
+import java.util.List;
+
+import domains.Livre;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.EntityTransaction;
+import javax.persistence.Persistence;
+import javax.persistence.RollbackException;
+
+public class LivreDaoImpl implements LivreDao {
+	
+	EntityManagerFactory emf;
+	
+	public LivreDaoImpl(EntityManagerFactory emf) {
+		this.emf=emf;
+	}
+
+	@Override
+	public List<Livre> findAll() {
+		EntityManager mgr = emf.createEntityManager();
+		EntityTransaction transaction = null;
+		List<Livre> livres;
+		try {
+			transaction = mgr.getTransaction();
+			transaction.begin();
+			livres = mgr.createQuery("SELECT liv FROM Livre liv", Livre.class).getResultList();
+			transaction.commit();
+
+		} catch (RollbackException e) {
+			if (transaction != null) {
+				transaction.rollback();
+			}
+			System.out.println("Error: il n'y aucun livre!");
+			e.printStackTrace();
+			return null;
+		} finally {
+			mgr.close();
+			emf.close();
+		}
+		return livres;
+	}
+
+	@Override
+	public Livre create(Livre l) {
+		EntityManager manager = emf.createEntityManager();
+		EntityTransaction transaction = null;
+
+		try {
+			transaction = manager.getTransaction();
+			transaction.begin();
+			manager.persist(l);
+			transaction.commit();
+			return l;
+		} catch (RollbackException e) {
+			if (transaction != null) {
+				transaction.rollback();
+			}
+			System.out.println("Erreur: probleme d'insertion!");
+			e.printStackTrace();
+			return null;
+		} finally {
+			manager.close();
+			emf.close();
+		}
+	}
+
+	@Override
+	public Livre getLivreByIsbn(int isbn) {
+		EntityManager manager = emf.createEntityManager();
+
+		try {
+			Livre l = manager.find(Livre.class, isbn);
+			if (l == null)
+				throw new Exception("Erreur: aucun livre avec cet isbn!");
+			return l;
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			return null;
+		} finally {
+			manager.close();
+			emf.close();
+		}
+	}
+
+	@Override
+	public Livre update(Livre newLivre) {
+		EntityManager manager = emf.createEntityManager();
+		EntityTransaction transaction = null;
+
+		try {
+			transaction = manager.getTransaction();
+			transaction.begin();
+
+			Livre l = manager.find(Livre.class, newLivre.getISBN());
+			if (l != null) {
+				l.setTitre(newLivre.getTitre());
+				l.setDate_edition(newLivre.getDate_edition());
+				l.setDescription(newLivre.getDescription());
+				l.setEditeur(newLivre.getEditeur());
+				l.setAuteur(newLivre.getAuteur());
+				manager.merge(l);
+			}
+			transaction.commit();
+			return l;
+		} catch (RollbackException e) {
+			if (transaction != null) {
+				transaction.rollback();
+			}
+			System.out.println("Erreur de mis à jour");
+			return null;
+		} finally {
+			manager.close();
+			emf.close();
+		}
+	}
+
+	@Override
+	public Livre delete(int isbn) {
+		EntityManager manager = emf.createEntityManager();
+
+		EntityTransaction transaction = null;
+		try {
+			transaction = manager.getTransaction();
+			transaction.begin();
+
+			Livre l = manager.find(Livre.class, isbn);
+			if (l != null) {
+				manager.remove(l);
+			}
+			transaction.commit();
+			return l;
+
+		} catch (RollbackException e) {
+			if (transaction != null) {
+				transaction.rollback();
+			}
+			System.out.println("Erreur de suppression!");
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	@Override
+	public Livre findLivreByTitre(String titre) {
+		EntityManager manager = emf.createEntityManager();
+
+		try {
+			Livre l = manager.createQuery("SELECT liv FROM Livre liv WHERE liv.titre = :titre", Livre.class)
+					.setParameter("titre", titre).getSingleResult();
+
+			if (l == null)
+				throw new Exception("Erreur: aucun livre avec cet isbn!");
+			return l;
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			return null;
+		} finally {
+			manager.close();
+			emf.close();
+		}
+	}
+
+	@Override
+	public Livre findLivreByDateEdition(Date date_edition) {
+		EntityManager manager = emf.createEntityManager();
+
+		try {
+			Livre l = manager
+					.createQuery("SELECT liv FROM Livre liv WHERE liv.date_edition = :date_edition", Livre.class)
+					.setParameter("date_edition", date_edition).getSingleResult();
+
+			if (l == null)
+				throw new Exception("Erreur: aucun livre avec cet isbn!");
+			return l;
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			return null;
+		} finally {
+			manager.close();
+			emf.close();
+		}
+	}
+}
